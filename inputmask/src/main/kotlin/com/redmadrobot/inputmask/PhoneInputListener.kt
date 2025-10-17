@@ -125,6 +125,14 @@ open class PhoneInputListener(
      */
     var customCountries: List<Country>? = null
 
+    override fun placeholder(): String {
+        val text = ""
+        val mask = pickMask(
+            CaretString(text, text.length, CaretString.CaretGravity.FORWARD(autocomplete))
+        )
+        return mask.placeholder()
+    }
+
     override fun pickMask(text: CaretString): Mask {
         computedCountries = Country.findCountries(customCountries, enableCountries, disableCountries, text.string)
         computedCountry = if (computedCountries.count() == 1) computedCountries.first() else null
