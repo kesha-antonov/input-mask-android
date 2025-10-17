@@ -5,6 +5,7 @@ import android.icu.number.NumberFormatter
 import android.icu.number.Precision
 import android.os.Build
 import android.text.TextWatcher
+import android.util.Log
 import android.widget.EditText
 import androidx.annotation.RequiresApi
 import com.redmadrobot.inputmask.helper.AffinityCalculationStrategy
@@ -101,14 +102,18 @@ open class NumberInputListener(
             .precision(Precision.unlimited())
 
     override fun placeholder(): String {
+        Log.d(TAG, "placeholder() called")
         val text = "0"
         val mask = pickMask(
             CaretString(text, text.length, CaretString.CaretGravity.FORWARD(autocomplete))
         )
-        return mask.placeholder()
+        val result = mask.placeholder()
+        Log.d(TAG, "placeholder() -> '$result'")
+        return result
     }
 
     override fun pickMask(text: CaretString): Mask {
+        Log.d(TAG, "pickMask(text='${text.string}')")
         val sanitisedNumberString = extractNumberAndDecimalSeparator(
 //            formatter,
             text.string
@@ -144,6 +149,7 @@ open class NumberInputListener(
         }
 
         primaryFormat = maskFormat
+        Log.d(TAG, "pickMask: generated maskFormat='$maskFormat'")
         return super.pickMask(text)
     }
 
@@ -158,6 +164,7 @@ open class NumberInputListener(
 //        formatter: LocalizedNumberFormatter,
         text: String
     ): SanitisedNumberString {
+        Log.d(TAG, "extractNumberAndDecimalSeparator(text='$text')")
         val expectedDecimalSeparator: String = decimalSeparator
 
         var digitsAndDecimalSeparators = text.filter { c: Char -> c.isDigit() || c.toString() == decimalSeparator }
@@ -190,15 +197,18 @@ open class NumberInputListener(
 //        intStr = String(intStr.prefix(formatter.maximumIntegerDigits)) TODO
 //        decStr = String(decStr.prefix(formatter.maximumFractionDigits)) TODO
 
-        return SanitisedNumberString(
+        val result = SanitisedNumberString(
             intStr,
             decStr,
             expectedDecimalSeparator,
             numberOfOccurencesOfDecimalSeparator
         )
+        Log.d(TAG, "extractNumberAndDecimalSeparator() -> intPart='$intStr', decPart='$decStr'")
+        return result
     }
 
     private fun assignNonZeroNumberNotation(): Char {
+        Log.d(TAG, "assignNonZeroNumberNotation()")
         val character = '1'
         customNotations = listOf(
             Notation(
@@ -211,7 +221,8 @@ open class NumberInputListener(
     }
 
     companion object {
-        val decimalSeparator = "."
+        private const val TAG = "InputMaskAndroid:NumberInputListener"
+        const val decimalSeparator = "."
 
         /**
          * Create a ``NumberInputListener`` instance and assign it as a field's

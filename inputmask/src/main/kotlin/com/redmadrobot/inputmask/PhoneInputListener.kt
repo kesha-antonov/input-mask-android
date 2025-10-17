@@ -1,6 +1,7 @@
 package com.redmadrobot.inputmask
 
 import android.text.TextWatcher
+import android.util.Log
 import android.widget.EditText
 import com.redmadrobot.inputmask.helper.AffinityCalculationStrategy
 import com.redmadrobot.inputmask.helper.Mask
@@ -126,29 +127,38 @@ open class PhoneInputListener(
     var customCountries: List<Country>? = null
 
     override fun placeholder(): String {
+        Log.d(TAG, "placeholder() called")
         val text = ""
         val mask = pickMask(
             CaretString(text, text.length, CaretString.CaretGravity.FORWARD(autocomplete))
         )
-        return mask.placeholder()
+        val result = mask.placeholder()
+        Log.d(TAG, "placeholder() -> '$result'")
+        return result
     }
 
     override fun pickMask(text: CaretString): Mask {
+        Log.d(TAG, "pickMask(text='${text.string}')")
         computedCountries = Country.findCountries(customCountries, enableCountries, disableCountries, text.string)
         computedCountry = if (computedCountries.count() == 1) computedCountries.first() else null
 
         val country = computedCountry
+        Log.d(TAG, "pickMask: computedCountry=${country?.name}, computedCountries.count=${computedCountries.count()}")
         return if (country == null) {
+            Log.d(TAG, "pickMask: no specific country, using default mask")
             Mask("+[000] [000] [000] [00] [00]")
         } else {
             primaryFormat = country.primaryFormat
             affineFormats = country.affineFormats
+            Log.d(TAG, "pickMask: using country ${country.name} with format ${country.primaryFormat}")
 
             super.pickMask(text)
         }
     }
 
     companion object {
+        private const val TAG = "InputMaskAndroid:PhoneInputListener"
+
         /**
          * Create a ``PhoneInputListener`` instance and assign it as a field's
          * `TextWatcher` and `onFocusChangeListener`.

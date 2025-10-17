@@ -131,6 +131,7 @@ open class MaskedTextChangedListener(
      * @param text - text; might be plain, might already have some formatting.
      */
     open fun setText(text: String, autocomplete: Boolean? = null): Mask.Result? {
+        Log.d(TAG, "setText(text='$text', autocomplete=$autocomplete)")
         return this.field.get()?.let {
             val result = setText(text, it, autocomplete)
             this.afterText = result.formattedText.string
@@ -146,6 +147,20 @@ open class MaskedTextChangedListener(
      * @param field - a field where to put formatted text.
      */
     open fun setText(text: String, field: EditText, autocomplete: Boolean? = null): Mask.Result {
+        Log.d(TAG, "setText(text='$text', field, autocomplete=$autocomplete)")
+        // If text is empty, don't apply mask formatting to avoid processing placeholder characters
+        if (text.isEmpty()) {
+            Log.d(TAG, "setText: text is empty, returning empty result")
+            field.setText("")
+            return Mask.Result(
+                CaretString("", 0, CaretString.CaretGravity.FORWARD(false)),
+                "",
+                0,
+                false,
+                ""
+            )
+        }
+
         val useAutocomplete: Boolean = autocomplete ?: this.autocomplete
         val textAndCaret = CaretString(text, text.length, CaretString.CaretGravity.FORWARD(useAutocomplete))
         val result: Mask.Result = this.pickMask(textAndCaret).apply(textAndCaret)
@@ -159,10 +174,10 @@ open class MaskedTextChangedListener(
                 Log.e(
                     "input-mask-android",
                     """
-                    
-                    WARNING! Your text field is not configured for the MaskedTextChangedListener! 
-                    For more information please refer to 
-                    
+
+                    WARNING! Your text field is not configured for the MaskedTextChangedListener!
+                    For more information please refer to
+
                     InputMask vs. android:inputType and IndexOutOfBoundsException
                     https://github.com/RedMadRobot/input-mask-android#inputmask-vs-androidinputtype-and-indexoutofboundsexception
                     """
@@ -170,6 +185,7 @@ open class MaskedTextChangedListener(
             }
         }
 
+        Log.d(TAG, "setText: returning result with formattedText='${result.formattedText.string}'")
         return result
     }
 
@@ -178,37 +194,58 @@ open class MaskedTextChangedListener(
      *
      * @return Placeholder string.
      */
-    open fun placeholder(): String = this.primaryMask.placeholder()
+    open fun placeholder(): String {
+        val result = this.primaryMask.placeholder()
+        Log.d(TAG, "placeholder() -> '$result'")
+        return result
+    }
 
     /**
      * Minimal length of the text inside the field to fill all mandatory characters in the mask.
      *
      * @return Minimal satisfying count of characters inside the text field.
      */
-    fun acceptableTextLength(): Int = this.primaryMask.acceptableTextLength()
+    fun acceptableTextLength(): Int {
+        val result = this.primaryMask.acceptableTextLength()
+        Log.d(TAG, "acceptableTextLength() -> $result")
+        return result
+    }
 
     /**
      *  Maximal length of the text inside the field.
      *
      *  @return Total available count of mandatory and optional characters inside the text field.
      */
-    fun totalTextLength(): Int = this.primaryMask.totalTextLength()
+    fun totalTextLength(): Int {
+        val result = this.primaryMask.totalTextLength()
+        Log.d(TAG, "totalTextLength() -> $result")
+        return result
+    }
 
     /**
      * Minimal length of the extracted value with all mandatory characters filled.\
      *
      * @return Minimal satisfying count of characters in extracted value.
      */
-    fun acceptableValueLength(): Int = this.primaryMask.acceptableValueLength()
+    fun acceptableValueLength(): Int {
+        val result = this.primaryMask.acceptableValueLength()
+        Log.d(TAG, "acceptableValueLength() -> $result")
+        return result
+    }
 
     /**
      * Maximal length of the extracted value.
      *
      * @return Total available count of mandatory and optional characters for extracted value.
      */
-    fun totalValueLength(): Int = this.primaryMask.totalValueLength()
+    fun totalValueLength(): Int {
+        val result = this.primaryMask.totalValueLength()
+        Log.d(TAG, "totalValueLength() -> $result")
+        return result
+    }
 
     override fun afterTextChanged(edit: Editable?) {
+        Log.d(TAG, "afterTextChanged(edit='$edit', afterText='$afterText', caretPosition=$caretPosition)")
         this.field.get()?.removeTextChangedListener(this)
         edit?.replace(0, edit.length, this.afterText)
 
@@ -218,10 +255,10 @@ open class MaskedTextChangedListener(
             Log.e(
                 "input-mask-android",
                 """
-                    
-                    WARNING! Your text field is not configured for the MaskedTextChangedListener! 
-                    For more information please refer to 
-                    
+
+                    WARNING! Your text field is not configured for the MaskedTextChangedListener!
+                    For more information please refer to
+
                     InputMask vs. android:inputType and IndexOutOfBoundsException
                     https://github.com/RedMadRobot/input-mask-android#inputmask-vs-androidinputtype-and-indexoutofboundsexception
                     """
@@ -233,10 +270,12 @@ open class MaskedTextChangedListener(
     }
 
     override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+        Log.d(TAG, "beforeTextChanged(s='$s', start=$start, count=$count, after=$after)")
         this.listener?.beforeTextChanged(s, start, count, after)
     }
 
     override fun onTextChanged(text: CharSequence, cursorPosition: Int, before: Int, count: Int) {
+        Log.d(TAG, "onTextChanged(text='$text', cursorPosition=$cursorPosition, before=$before, count=$count)")
         val isDeletion: Boolean = before > 0 && count == 0
         val useAutocomplete = if (isDeletion) false else this.autocomplete
         val useAutoskip = if (isDeletion) this.autoskip else false
@@ -252,11 +291,15 @@ open class MaskedTextChangedListener(
         this.afterText = result.formattedText.string
         this.caretPosition = result.formattedText.caretPosition
 
+        Log.d(TAG, "onTextChanged: afterText='$afterText', caretPosition=$caretPosition, extractedValue='${result.extractedValue}'")
         this.valueListener?.onTextChanged(result.complete, result.extractedValue, afterText, result.tailPlaceholder)
     }
 
     override fun onFocusChange(view: View?, hasFocus: Boolean) {
+        Log.d(TAG, "onFocusChange(hasFocus=$hasFocus)")
+        Log.d(TAG, "onFocusChange(hasFocus=$hasFocus)")
         if (this.autocomplete && hasFocus) {
+            Log.d(TAG, "onFocusChange: autocomplete is enabled")
             val text: String = if (this.field.get()?.text!!.isEmpty()) {
                 ""
             } else {
@@ -278,10 +321,10 @@ open class MaskedTextChangedListener(
                 Log.e(
                     "input-mask-android",
                     """
-                        
-                    WARNING! Your text field is not configured for the MaskedTextChangedListener! 
-                    For more information please refer to 
-                    
+
+                    WARNING! Your text field is not configured for the MaskedTextChangedListener!
+                    For more information please refer to
+
                     InputMask vs. android:inputType and IndexOutOfBoundsException
                     https://github.com/RedMadRobot/input-mask-android#inputmask-vs-androidinputtype-and-indexoutofboundsexception
                     """
@@ -294,7 +337,11 @@ open class MaskedTextChangedListener(
     open fun pickMask(
         text: CaretString
     ): Mask {
-        if (this.affineFormats.isEmpty()) return this.primaryMask
+        Log.d(TAG, "pickMask(text='${text.string}')")
+        if (this.affineFormats.isEmpty()) {
+            Log.d(TAG, "pickMask: no affine formats, returning primary mask")
+            return this.primaryMask
+        }
 
         data class MaskAffinity(val mask: Mask, val affinity: Int)
 
@@ -324,7 +371,9 @@ open class MaskedTextChangedListener(
             masksAndAffinities.add(MaskAffinity(this.primaryMask, primaryAffinity))
         }
 
-        return masksAndAffinities.first().mask
+        val selectedMask = masksAndAffinities.first().mask
+        Log.d(TAG, "pickMask: selected mask with affinity ${masksAndAffinities.first().affinity}")
+        return selectedMask
     }
 
     private fun maskGetOrCreate(format: String, customNotations: List<Notation>): Mask =
@@ -345,6 +394,8 @@ open class MaskedTextChangedListener(
     }
 
     companion object {
+        private const val TAG = "InputMaskAndroid:MaskedTextChangedListener"
+
         /**
          * Create a `MaskedTextChangedListener` instance and assign it as a field's
          * `TextWatcher` and `onFocusChangeListener`.
